@@ -1,0 +1,35 @@
+version: "3.3"
+services:
+  
+  couchdb:
+    image: apache/couchdb:2.1.1
+    volumes:
+      - couchdb-data:/opt/couchdb/data
+    # ports:
+    #   - "5984:5984"
+    networks:
+      - traefik
+    # environment:
+      # - NODENAME: couchdb.appsrv.com
+    deploy:
+      #replicas: 1
+      restart_policy:
+        delay: 30s
+        max_attempts: 10
+        window: 60s
+      placement:
+        constraints:
+          - "node.role == manager"
+      labels:
+        - "traefik.port=5984"
+        - "traefik.docker.network=traefik"
+        - "traefik.backend=couchdb"
+        - "traefik.frontend.rule=Host:minio4.appsrv.com,couchdb.appsrv.com"
+    
+volumes:
+  couchdb-data:
+
+networks:
+  traefik:
+    external:
+      name: traefik

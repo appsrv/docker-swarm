@@ -1,0 +1,29 @@
+version: "3.3"
+services:
+  traefik:
+    image: traefik:latest
+    ports:
+      # - "0.0.0.0:80:80"
+      # - "0.0.0.0:443:443"
+      # - "0.0.0.0:8080:8080"
+      - 80:80
+      - 443:443
+      - 8080:8080
+    networks:
+      - traefik
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/traefik/traefik.toml:/traefik.toml
+      - /opt/traefik/acme.json:/acme.json
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+      placement:
+        constraints:
+          - "node.role == manager"
+          
+networks:
+  traefik:
+    external:
+      name: traefik

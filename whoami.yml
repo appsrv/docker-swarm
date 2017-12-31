@@ -1,0 +1,43 @@
+version: "3.3"
+services:
+  
+  whoami1:
+    image: emilevauge/whoami
+    networks:
+      - traefik
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.port=80"
+        - "traefik.docker.network=traefik"
+        - "traefik.backend=whoami1"
+        - "traefik.frontend.rule=Host:whoami1.appsrv.com"
+      
+  whoami2:
+    image: emilevauge/whoami
+    networks:
+      - traefik
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.port=80"
+        - "traefik.docker.network=traefik"
+        - "traefik.backend=whoami2"
+        - "traefik.frontend.rule=Host:whoami2.appsrv.com"
+      
+  whoami3:
+    image: emilevauge/whoami
+    networks:
+      - traefik
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.port=80"
+        - "traefik.docker.network=traefik"
+        - "traefik.backend=whoami3"
+        - "traefik.frontend.rule=Host:whoami3.appsrv.com"
+      
+networks:
+  traefik:
+    external:
+      name: traefik

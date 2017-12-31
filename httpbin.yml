@@ -1,0 +1,25 @@
+version: "3.3"
+services:
+  
+  httpbin:
+    image: kennethreitz/httpbin:latest
+    networks:
+      - traefik
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - "node.role == manager"
+      labels:
+        - "traefik.port=8080"
+        - "traefik.docker.network=traefik"
+        - "traefik.backend=httpbin"
+        - "traefik.frontend.rule=Host:httpbin.appsrv.com"
+
+networks:
+  traefik:
+    external:
+      name: traefik
+    

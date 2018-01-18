@@ -1,3 +1,3 @@
-# n1
+# Docker Swarm Mode
 
-n1.appsrv.com cluster files for docker swarm
+Configuration files for various services.

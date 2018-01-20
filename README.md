@@ -1,3 +1,13 @@
-# n1
+# Docker Swarm Mode
 
-n1.appsrv.com cluster files for docker swarm
+Our Docker cluster compose files.
+
+### Setup
+
+Create a network for `traefik`.
+
+```
+docker network create --attachable=true --driver=overlay traefik
+```
+
+

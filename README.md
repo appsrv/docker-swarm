@@ -4,10 +4,12 @@ Our Docker cluster compose files.
 
 ### Setup
 
-Create a network for `traefik`.
+Networks
 
 ```
 docker network create --attachable=true --driver=overlay traefik
+docker network create --attachable=true --driver=overlay data
+docker network create --attachable=true --driver=overlay redis
 ```
 
 

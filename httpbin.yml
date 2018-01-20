@@ -9,9 +9,9 @@ services:
       replicas: 3
       restart_policy:
         condition: on-failure
-      placement:
-        constraints:
-          - "node.role == manager"
+      # placement:
+      #   constraints:
+      #     - "node.role == manager"
       labels:
         - "traefik.port=8080"
         - "traefik.docker.network=traefik"

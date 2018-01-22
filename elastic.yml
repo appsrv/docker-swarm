@@ -1,0 +1,207 @@
+version: "3.3"
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.1.2
+    environment:
+      - "cluster.name=e1"
+      - "bootstrap.memory_lock=false"
+      #- "xpack.security.enabled=false"
+      - "discovery.zen.minimum_master_nodes=2"
+      - "discovery.zen.ping.unicast.hosts=tasks.elasticsearch2"
+      - "http.cors.enabled=true"
+      - "http.cors.allow-origin=*"
+      - "logger.level=debug"
+      # - ELASTIC_PASSWORD=${APPSRV_ELASTIC_PASSWORD}
+      - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+    # ports:
+    #   - "9200:9200"
+    #   - "9300:9300"
+    networks:
+      - esnet
+      - traefik
+    deploy:
+      # replicas: 3
+      restart_policy:
+        delay: 10s
+        max_attempts: 1
+        window: 60s
+      # resources:
+      #   limits:
+      #     memory: 2g
+      #   ulimits:
+      #     memlock:
+      #       soft: -1
+      #       hard: -1
+      #     nofile:
+      #       soft: 65536
+      #       hard: 65536
+      #     nproc:
+      #       soft: 65536
+      #       hard: 65536
+      placement:
+        constraints:
+          - "node.role == manager"
+      labels:
+        - "traefik.port=9200"
+        - "traefik.docker.network=traefik"
+        - "traefik.backend=elasticsearch,elasticsearch2"
+        - "traefik.frontend.rule=Host:elasticsearch.appsrv.com"
+
+  elasticsearch2:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.1.2
+    environment:
+      - "cluster.name=e1"
+      - "bootstrap.memory_lock=false"
+      #- "xpack.security.enabled=false"
+      - "discovery.zen.minimum_master_nodes=2"
+      - "discovery.zen.ping.unicast.hosts=tasks.elasticsearch"
+      - "http.cors.enabled=true"
+      - "http.cors.allow-origin=*"
+      - "logger.level=debug"
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+    volumes:
+      - esdata2:/usr/share/elasticsearch/data
+    # ports:
+    #   - "9200:9200"
+    #   - "9300:9300"
+    networks:
+      - esnet
+      - traefik
+    deploy:
+      # replicas: 3
+      restart_policy:
+        delay: 10s
+        max_attempts: 1
+        window: 60s
+      # resources:
+      #   limits:
+      #     memory: 2g
+      #   ulimits:
+      #     memlock:
+      #       soft: -1
+      #       hard: -1
+      #     nofile:
+      #       soft: 65536
+      #       hard: 65536
+      #     nproc:
+      #       soft: 65536
+      #       hard: 65536
+      placement:
+        constraints:
+          - "node.role == manager"
+      labels:
+        - "traefik.enable=false"
+        
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.1.2
+    environment:
+      # - ELASTICSEARCH_USERNAME=${APPSRV_ELASTIC_USERNAME}
+      # - ELASTIC_PASSWORD=${APPSRV_ELASTIC_PASSWORD}
+      - XPACK_MONITORING_ENABLED=true
+    # ports:
+    #   - "5601:5601"
+    networks:
+      - esnet
+      - traefik
+    deploy:
+      replicas: 1
+      restart_policy:
+        delay: 10s
+        max_attempts: 1
+        window: 60s
+      placement:
+        constraints:
+          - "node.role == manager"
+      labels:
+        - "traefik.port=5601"
+        - "traefik.docker.network=traefik"
+        - "traefik.backend=kibana"
+        - "traefik.frontend.rule=Host:kibana.appsrv.com"
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:6.1.2
+    environment:
+      #- ELASTIC_PASSWORD=${APPSRV_ELASTIC_PASSWORD}
+      - "VERSION=1.0.0"
+      - "http.host=0.0.0.0"
+      - "path.config=/usr/share/logstash/pipeline"
+      - "XPACK_MONITORING_ENABLED=true"
+    volumes:
+      #- /opt/elastic/logstash/config:/usr/share/logstash/config/
+      - /opt/elastic/logstash/pipeline:/usr/share/logstash/pipeline/
+    ports:
+      - ":5000/tcp"
+      - ":5000/udp"
+    networks:
+      - esnet
+    deploy:
+      replicas: 3
+      restart_policy:
+        delay: 30s
+        max_attempts: 10
+        window: 60s
+      placement:
+        constraints:
+          - "node.role == manager"
+      labels:
+        - "traefik.enable=false"
+
+  logspout:
+    image: appsrv1/logspout
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      ROUTE_URIS: logstash://logstash:5000
+      LOGSTASH_TAGS: logspout
+    networks:
+      - esnet
+    deploy:
+      replicas: 1
+      restart_policy:
+        delay: 30s
+        max_attempts: 10
+        window: 60s
+      placement:
+        constraints:
+          - "node.role == manager"
+      labels:
+        - "traefik.enable=false"
+
+  # Because the file permissions installed filebeat directly into the OS
+  # filebeat:
+  #   image: docker.elastic.co/beats/filebeat:6.1.2
+  #   # If the host system has logs at "/var/log", mount them at "/mnt/log"
+  #   # inside the container, where Filebeat can find them.
+  #   volumes: 
+  #     - /var/log/syslog:/mnt/log/syslog:ro
+  #   networks:
+  #     - esnet
+  #   deploy:
+  #     replicas: 1
+  #     restart_policy:
+  #       delay: 30s
+  #       max_attempts: 10
+  #       window: 60s
+  #     placement:
+  #       constraints:
+  #         - "node.role == manager"
+  #     labels:
+  #       - "traefik.enable=false"
+          
+volumes:
+  esdata1:
+    driver: local
+  esdata2:
+    driver: local
+  esdata3:
+    driver: local
+
+networks:
+  traefik:
+    external: true
+  esnet:
+    driver: overlay
+    attachable: true

@@ -7,7 +7,7 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
     cap_add:
-      - ALL
+      - SYS_PTRACE
     networks:
       - traefik
     deploy:
@@ -21,7 +21,7 @@ services:
         - "traefik.port=19999"
         - "traefik.docker.network=traefik"
         - "traefik.backend=netdata"
-        - "traefik.frontend.rule=Host:minio3.appsrv.com,netdata.appsrv.com"
+        - "traefik.frontend.rule=Host:netdata.appsrv.com"
 
 networks:
   traefik:
